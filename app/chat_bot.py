@@ -10,11 +10,26 @@ from langchain_community.vectorstores import FAISS
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.runnable import RunnablePassthrough
 from dotenv import load_dotenv
+import boto3
 
-load_dotenv()
+
+# AWS SSM Parameter Store에서 API 키를 가져오는 함수
+def get_secret():
+    try:
+        ssm = boto3.client('ssm', region_name='us-east-1')  # 예: ap-northeast-2
+        parameter = ssm.get_parameter(
+            Name='/gpt_fastapi/openai-api-key',  # Parameter Store에서 사용할 파라미터 이름
+            WithDecryption=True
+        )
+        return parameter['Parameter']['Value']
+    except Exception as e:
+        print(f"Error fetching secret: {str(e)}")
+        raise e
+
+# load_dotenv()
 
 # 환경 변수에서 API 키 가져오기
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
