@@ -16,15 +16,25 @@ import boto3
 # AWS SSM Parameter Store에서 API 키를 가져오는 함수
 def get_secret():
     try:
-        ssm = boto3.client('ssm', region_name='us-east-1')  # 예: ap-northeast-2
+        ssm = boto3.client('ssm', region_name='us-east-1')
         parameter = ssm.get_parameter(
-            Name='/gpt_fastapi/openai-api-key',  # Parameter Store에서 사용할 파라미터 이름
+            Name='/gpt_fastapi/openai-api-key',
             WithDecryption=True
         )
         return parameter['Parameter']['Value']
     except Exception as e:
         print(f"Error fetching secret: {str(e)}")
         raise e
+
+app = FastAPI()
+
+# 전역 변수로 API 키 설정
+try:
+    OPENAI_API_KEY = get_secret()
+except Exception as e:
+    print(f"Failed to get API key from Parameter Store: {str(e)}")
+    # 백업으로 환경 변수에서 시도
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # load_dotenv()
 
@@ -114,10 +124,4 @@ def smart_qa(question: str) -> str:
     except Exception as e:
         return f"오류가 발생했습니다: {str(e)}"
 
-@app.post("/api/ask")
-async def ask_question(request: QuestionRequest):
-    try:
-        answer = smart_qa(request.question)
-        return {"answer": answer}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
