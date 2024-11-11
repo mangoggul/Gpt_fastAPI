@@ -61,7 +61,7 @@ def smart_qa(question: str) -> str:
             )
 
             # 문서 로드 및 분할
-            loader = TextLoader("app/files/청년자립정보.txt", encoding='utf-8')
+            loader = TextLoader("files/청년자립정보.txt", encoding='utf-8')
             documents = loader.load()
             docs = splitter.split_documents(documents)
 
