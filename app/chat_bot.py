@@ -12,36 +12,19 @@ from langchain.schema.runnable import RunnablePassthrough
 from dotenv import load_dotenv
 import boto3
 
+def get_gpt_api_key():
+    # SSM 클라이언트를 생성하고 파라미터 가져오기
+    ssm = boto3.client("ssm", region_name="us-east-1")  # 사용 중인 리전 설정
+    parameter = ssm.get_parameter(Name="/gpt_fastapi/openai-api-key", WithDecryption=True)
+    return parameter["Parameter"]["Value"]
 
-# AWS SSM Parameter Store에서 API 키를 가져오는 함수
-def get_secret():
-    try:
-        ssm = boto3.client('ssm', region_name='us-east-1')
-        parameter = ssm.get_parameter(
-            Name='/gpt_fastapi/openai-api-key',
-            WithDecryption=True
-        )
-        return parameter['Parameter']['Value']
-    except Exception as e:
-        print(f"Error fetching secret: {str(e)}")
-        raise e
+# API 키 가져오기
+api_key = get_gpt_api_key()
+OPENAI_API_KEY = api_key
+
 
 app = FastAPI()
 
-# 전역 변수로 API 키 설정
-try:
-    OPENAI_API_KEY = get_secret()
-except Exception as e:
-    print(f"Failed to get API key from Parameter Store: {str(e)}")
-    # 백업으로 환경 변수에서 시도
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# load_dotenv()
-
-# 환경 변수에서 API 키 가져오기
-# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-app = FastAPI()
 
 # 요청 모델 정의
 class QuestionRequest(BaseModel):
