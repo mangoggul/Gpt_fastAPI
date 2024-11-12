@@ -1,5 +1,4 @@
 import os
-from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from openai import OpenAI
 from langchain_openai import ChatOpenAI
@@ -10,17 +9,11 @@ from langchain_community.vectorstores import FAISS
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.runnable import RunnablePassthrough
 from dotenv import load_dotenv
-import boto3
 
-
-
-
-load_dotenv()
 
 # 환경 변수에서 API 키 가져오기
+load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-app = FastAPI()
 
 # 요청 모델 정의
 class QuestionRequest(BaseModel):
@@ -28,14 +21,14 @@ class QuestionRequest(BaseModel):
 
 def smart_qa(question: str) -> str:
     try:
-        # GPT-3.5 초기화
+        # GPT-4 초기화
         general_llm = ChatOpenAI(
             model="gpt-4o",
             temperature=0.7,
             openai_api_key=OPENAI_API_KEY
         )
 
-        # GPT-3.5용 프롬프트 템플릿
+        # GPT-4용 프롬프트 템플릿
         general_prompt = ChatPromptTemplate.from_messages([
             (
                 "system",
@@ -49,11 +42,11 @@ def smart_qa(question: str) -> str:
             ("human", "{question}")
         ])
 
-        # GPT-3.5로 먼저 시도
+        # GPT-4로 먼저 시도
         chain = general_prompt | general_llm
         result = chain.invoke({"question": question})
         initial_response = result.content
-        print(initial_response)
+        print("초기 응답:", initial_response)
 
         # "NEED_CONTEXT"가 있으면 추가 문서 기반 응답
         if "NEED_CONTEXT" in initial_response:
@@ -97,10 +90,12 @@ def smart_qa(question: str) -> str:
             )
 
             doc_result = doc_chain.invoke(question)
-            return doc_result.content
+            print("문서 기반 응답:", doc_result.content)
 
         return initial_response
     except Exception as e:
-        return f"오류가 발생했습니다: {str(e)}"
+        print(f"오류가 발생했습니다: {str(e)}")
 
-
+# 예시 질문
+question = "구름톤 팀원에 대해 소개해줘"
+answer = smart_qa(question)
